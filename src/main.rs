@@ -2,7 +2,6 @@
 extern crate log;
 extern crate dotenv;
 extern crate egg_mode;
-extern crate egg_mode_text;
 extern crate env_logger;
 extern crate futures;
 extern crate hyper;
