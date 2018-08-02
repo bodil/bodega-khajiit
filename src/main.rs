@@ -35,7 +35,7 @@ const BORDER_SIZE: u32 = 6;
 const TEXT_MARGIN: f32 = 20.0;
 const OUTER_MARGIN: u32 = 10;
 const TIMELINE_PAGE_SIZE: i32 = 10;
-const INTERVAL: Duration = Duration::from_secs(10);
+const INTERVAL: Duration = Duration::from_secs(1800);
 
 type State = HashSet<u64>;
 
