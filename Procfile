@@ -1,1 +1,1 @@
-worker: ./target/release/bodega-khajiit
+web: ./target/release/bodega-khajiit

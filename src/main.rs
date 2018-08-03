@@ -16,7 +16,9 @@ use egg_mode::{
     tweet::{user_timeline, Timeline, Tweet},
     KeyPair, Token,
 };
-use futures::future::Future;
+use futures::future::{Executor, Future};
+use hyper::service::service_fn_ok;
+use hyper::{Body, Request, Response, Server};
 use image::{DynamicImage, GenericImage, Pixel, Rgba, RgbaImage};
 use rusttype::{point, Font, Scale};
 use std::env;
@@ -33,6 +35,8 @@ const TEXT_MARGIN: f32 = 20.0;
 const OUTER_MARGIN: u32 = 10;
 const TIMELINE_PAGE_SIZE: i32 = 10;
 const INTERVAL: Duration = Duration::from_secs(1800);
+
+const INDEX_HTML: &[u8] = include_bytes!("../index.html");
 
 fn _test_main() {
     let font = Font::from_bytes(FONT).unwrap();
@@ -58,6 +62,31 @@ fn main() {
     }
 }
 
+#[allow(unknown_lints)]
+#[allow(needless_pass_by_value)]
+fn web_responder(_req: Request<Body>) -> Response<Body> {
+    Response::builder()
+        .status(200)
+        .header("Content-Type", "text/html")
+        .body(Body::from(
+            ::std::str::from_utf8(INDEX_HTML).expect("index.html has invalid UTF-8!"),
+        )).unwrap()
+}
+
+fn run_server(core: &mut Core) -> Result<(), String> {
+    let port = env::var("PORT")
+        .expect("No PORT environment variable set.")
+        .parse()
+        .expect("Unable to parse value of PORT environment variable.");
+    let addr = ([127, 0, 0, 1], port).into();
+    let responder = || service_fn_ok(web_responder);
+    let server = Server::bind(&addr)
+        .serve(responder)
+        .map_err(|e| error!("Web server error: {}", e));
+    core.execute(server)
+        .map_err(|error| format!("Failed to start web server: {:?}", error))
+}
+
 fn main_process() -> Result<(), String> {
     let mut state = State::new()?;
 
@@ -74,6 +103,7 @@ fn main_process() -> Result<(), String> {
     let token = Token::Access { consumer, access };
 
     let mut core = Core::new().expect("Could not set up Tokio reactor.");
+    run_server(&mut core)?;
     let handle = core.handle();
 
     let user = core
