@@ -1,5 +1,4 @@
 /target
 **/*.rs.bk
 /state.json
-/impact.ttf
 /.env
