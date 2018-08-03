@@ -6,10 +6,9 @@ extern crate env_logger;
 extern crate futures;
 extern crate hyper;
 extern crate hyper_rustls;
-extern crate im;
 extern crate image;
+extern crate postgres;
 extern crate rusttype;
-extern crate serde_json;
 extern crate tokio_core;
 
 use dotenv::dotenv;
@@ -18,15 +17,14 @@ use egg_mode::{
     KeyPair, Token,
 };
 use futures::future::Future;
-use im::HashSet;
 use image::{DynamicImage, GenericImage, Pixel, Rgba, RgbaImage};
 use rusttype::{point, Font, Scale};
 use std::env;
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::Path;
 use std::time::Duration;
 use tokio_core::reactor::{Core, Timeout};
+
+mod state;
+use state::State;
 
 const FONT: &[u8] = include_bytes!("../impact.ttf");
 const FONT_SIZE: f32 = 128.0;
@@ -35,8 +33,6 @@ const TEXT_MARGIN: f32 = 20.0;
 const OUTER_MARGIN: u32 = 10;
 const TIMELINE_PAGE_SIZE: i32 = 10;
 const INTERVAL: Duration = Duration::from_secs(1800);
-
-type State = HashSet<u64>;
 
 fn _test_main() {
     let font = Font::from_bytes(FONT).unwrap();
@@ -63,8 +59,7 @@ fn main() {
 }
 
 fn main_process() -> Result<(), String> {
-    let mut state = load_state();
-    // let mut state = HashSet::new();
+    let mut state = State::new()?;
 
     let font = Font::from_bytes(FONT).unwrap();
 
@@ -103,37 +98,16 @@ fn iterate(core: &mut Core, state: &mut State, token: &Token, font: &Font) -> Re
     let timeline = user_timeline("Bodegacats_", false, false, token, &handle)
         .with_page_size(TIMELINE_PAGE_SIZE);
     let (_timeline, images) = check_timeline(core, state, timeline)?;
-    save_state(state);
-    for image_url in images {
-        let img = process_image(core, &image_url, |i| {
-            draw_on_image(&i, font, "KHAJIIT HAS WARES", "IF YOU HAVE COIN")
-        })?;
-        send_tweet(core, token, img)?;
+    if env::var("DRY_RUN").is_err() {
+        for image_url in images {
+            let img = process_image(core, &image_url, |i| {
+                draw_on_image(&i, font, "KHAJIIT HAS WARES", "IF YOU HAVE COIN")
+            })?;
+            send_tweet(core, token, img)?;
+        }
     }
 
     Ok(())
-}
-
-fn load_state() -> State {
-    let file_name = env::var("STATE_FILE").expect("No STATE_FILE environment variable set.");
-    let file_path = Path::new(&file_name);
-    if !file_path.exists() {
-        return HashSet::new();
-    }
-
-    let mut f = File::open(file_path).expect("Unable to read STATE_FILE.");
-    let mut state_data = String::new();
-    f.read_to_string(&mut state_data)
-        .expect("Unable to read contents of STATE_FILE.");
-    serde_json::from_str(&state_data).expect("State file corrupt!")
-}
-
-fn save_state(state: &State) {
-    let file_name = env::var("STATE_FILE").expect("No STATE_FILE environment variable set.");
-    let mut f = File::create(file_name).expect("Unable to open STATE_FILE for writing.");
-    let data = serde_json::to_string(&state).expect("Unable to serialise state data!");
-    f.write_all(&data.as_bytes())
-        .expect("Unable to write to STATE_FILE.");
 }
 
 fn check_timeline<'a>(
@@ -146,7 +120,7 @@ fn check_timeline<'a>(
         Ok((new_timeline, response)) => {
             let mut out = Vec::new();
             for tweet in response.response.iter().rev() {
-                out.extend(process_tweet(tweet, state));
+                out.extend(process_tweet(tweet, state)?);
             }
             Ok((new_timeline, out))
         }
@@ -154,9 +128,9 @@ fn check_timeline<'a>(
     }
 }
 
-fn process_tweet(tweet: &Tweet, state: &mut State) -> Vec<String> {
+fn process_tweet(tweet: &Tweet, state: &mut State) -> Result<Vec<String>, String> {
     let mut out = Vec::new();
-    if state.insert(tweet.id).is_none() {
+    if state.insert(tweet.id)? {
         info!("Processing new tweet: {:?}", tweet.text);
         if let Some(ref entities) = tweet.entities.media {
             for entity in entities {
@@ -164,7 +138,7 @@ fn process_tweet(tweet: &Tweet, state: &mut State) -> Vec<String> {
             }
         }
     }
-    out
+    Ok(out)
 }
 
 fn load_url(core: &mut Core, url: &str) -> Result<Vec<u8>, String> {
