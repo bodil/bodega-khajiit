@@ -144,7 +144,7 @@ fn process_tweet(tweet: &Tweet, state: &mut State) -> Result<Vec<String>, String
 fn load_url(core: &mut Core, url: &str) -> Result<Vec<u8>, String> {
     use hyper::{rt::Stream, Body, Client, Uri};
 
-    info!("Loading image from URL: {}", url);
+    trace!("Loading image from URL: {}", url);
 
     let uri = match url.parse::<Uri>() {
         Ok(uri) => uri,
@@ -173,7 +173,7 @@ where
     F: Fn(DynamicImage) -> DynamicImage,
 {
     let image_data = load_url(core, url)?;
-    info!("Processing image...");
+    trace!("Processing image...");
     let mut im = match image::load_from_memory(&image_data) {
         Ok(image) => image,
         Err(error) => {
