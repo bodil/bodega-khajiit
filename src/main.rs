@@ -78,7 +78,7 @@ fn run_server(core: &mut Core) -> Result<(), String> {
         .expect("No PORT environment variable set.")
         .parse()
         .expect("Unable to parse value of PORT environment variable.");
-    let addr = ([127, 0, 0, 1], port).into();
+    let addr = ([0, 0, 0, 0], port).into();
     let responder = || service_fn_ok(web_responder);
     let server = Server::bind(&addr)
         .serve(responder)
