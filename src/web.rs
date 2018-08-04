@@ -8,25 +8,34 @@ use tokio_core::reactor::Core;
 
 const INDEX_HTML: &[u8] = include_bytes!("../index.html");
 
+#[cfg(production)]
 #[allow(unknown_lints)]
 #[allow(needless_pass_by_value)]
 fn web_responder(req: Request<Body>) -> impl Future<Item = Response<Body>, Error = Error> {
-    check_https_redirect(&req).or_else(|_| {
-        future::ok(
-            Response::builder()
-                .status(200)
-                .header("Content-Type", "text/html")
-                .body(Body::from(
-                    ::std::str::from_utf8(INDEX_HTML).expect("index.html has invalid UTF-8!"),
-                )).unwrap(),
-        )
-    })
+    check_https_redirect(&req).or_else(|_| serve_static())
 }
 
+#[cfg(not(production))]
+#[allow(unknown_lints)]
+#[allow(needless_pass_by_value)]
+fn web_responder(_req: Request<Body>) -> impl Future<Item = Response<Body>, Error = Error> {
+    serve_static()
+}
+
+fn serve_static() -> impl Future<Item = Response<Body>, Error = Error> {
+    future::ok(
+        Response::builder()
+            .status(200)
+            .header("Content-Type", "text/html")
+            .body(Body::from(
+                ::std::str::from_utf8(INDEX_HTML).expect("index.html has invalid UTF-8!"),
+            )).unwrap(),
+    )
+}
+
+#[allow(dead_code)]
 fn check_https_redirect(req: &Request<Body>) -> impl Future<Item = Response<Body>, Error = Error> {
-    if (env::var("NODE_ENV") == Ok("production".to_owned()) || env::var("CC_DEPLOYMENT_ID").is_ok())
-        && req.headers().get("x-forwarded-proto") != Some(&HeaderValue::from_static("https"))
-    {
+    if req.headers().get("x-forwarded-proto") != Some(&HeaderValue::from_static("https")) {
         let redirect = format!(
             "https://{}{}",
             req.uri().host().unwrap_or_else(|| req
