@@ -1,20 +1,52 @@
-use futures::future::{Executor, Future};
-use hyper::service::service_fn_ok;
+use futures::future::{self, Executor, Future};
+use hyper::header::{HeaderValue, HOST, LOCATION};
+use hyper::service::service_fn;
 use hyper::{Body, Request, Response, Server};
 use std::env;
+use std::io::{Error, ErrorKind};
 use tokio_core::reactor::Core;
 
 const INDEX_HTML: &[u8] = include_bytes!("../index.html");
 
 #[allow(unknown_lints)]
 #[allow(needless_pass_by_value)]
-fn web_responder(_req: Request<Body>) -> Response<Body> {
-    Response::builder()
-        .status(200)
-        .header("Content-Type", "text/html")
-        .body(Body::from(
-            ::std::str::from_utf8(INDEX_HTML).expect("index.html has invalid UTF-8!"),
-        )).unwrap()
+fn web_responder(req: Request<Body>) -> impl Future<Item = Response<Body>, Error = Error> {
+    check_https_redirect(&req).or_else(|_| {
+        future::ok(
+            Response::builder()
+                .status(200)
+                .header("Content-Type", "text/html")
+                .body(Body::from(
+                    ::std::str::from_utf8(INDEX_HTML).expect("index.html has invalid UTF-8!"),
+                )).unwrap(),
+        )
+    })
+}
+
+fn check_https_redirect(req: &Request<Body>) -> impl Future<Item = Response<Body>, Error = Error> {
+    if (env::var("NODE_ENV") == Ok("production".to_owned()) || env::var("CC_DEPLOYMENT_ID").is_ok())
+        && req.headers().get("x-forwarded-proto") != Some(&HeaderValue::from_static("https"))
+    {
+        let redirect = format!(
+            "https://{}{}",
+            req.uri().host().unwrap_or_else(|| req
+                .headers()
+                .get(HOST)
+                .and_then(|host| host.to_str().ok())
+                .unwrap_or_default()),
+            req.uri().path()
+        );
+        trace!("Redirecting: {:?} => {:?}", req.uri(), redirect);
+        future::ok(
+            Response::builder()
+                .status(301)
+                .header(LOCATION, redirect.as_str())
+                .body(Body::empty())
+                .unwrap(),
+        )
+    } else {
+        future::err(Error::new(ErrorKind::Other, "no redirect"))
+    }
 }
 
 pub fn run_server(core: &mut Core) -> Result<(), String> {
@@ -23,7 +55,7 @@ pub fn run_server(core: &mut Core) -> Result<(), String> {
         .parse()
         .expect("Unable to parse value of PORT environment variable.");
     let addr = ([0, 0, 0, 0], port).into();
-    let responder = || service_fn_ok(web_responder);
+    let responder = || service_fn(web_responder);
     let server = Server::bind(&addr)
         .serve(responder)
         .map_err(|e| error!("Web server error: {}", e));
