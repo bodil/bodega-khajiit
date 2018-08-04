@@ -8,7 +8,9 @@ pub struct State {
 
 impl State {
     pub fn new() -> Result<State, String> {
-        let url = env::var("DATABASE_URL").expect("No DATABASE_URL environment variable set.");
+        let url = env::var("DATABASE_URL")
+            .or_else(|_| env::var("POSTGRESQL_ADDON_URI"))
+            .expect("No DATABASE_URL or POSTGRESQL_ADDON_URI environment variable set.");
         let db = match Connection::connect(url.as_str(), TlsMode::None) {
             Ok(db) => db,
             Err(error) => return Err(format!("Can't connect to Postgres at {}: {:?}", url, error)),
