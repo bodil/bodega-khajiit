@@ -1,4 +1,4 @@
-use image::{DynamicImage, FilterType, GenericImage, Pixel, Rgba, RgbaImage};
+use image::{DynamicImage, FilterType, GenericImage, GenericImageView, Pixel, Rgba, RgbaImage};
 use rusttype::{point, Font, Scale};
 
 use config::{BORDER_SIZE, FONT_SIZE, OUTER_MARGIN, TEXT_MARGIN};
@@ -11,7 +11,8 @@ fn render_text(font: &Font, text: &str) -> RgbaImage {
             text,
             scale,
             point(TEXT_MARGIN, TEXT_MARGIN + v_metrics.ascent),
-        ).collect();
+        )
+        .collect();
 
     let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
     let glyphs_width = {

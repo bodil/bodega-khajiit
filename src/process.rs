@@ -35,7 +35,7 @@ pub fn main() -> Result<(), String> {
     let handle = core.handle();
 
     let user = core
-        .run(egg_mode::verify_tokens(&token, &handle))
+        .run(egg_mode::verify_tokens(&token))
         .expect("ABORTING: Twitter token no longer valid!");
     info!("Logged in as: {:?}", user.screen_name);
     loop {
@@ -52,9 +52,8 @@ pub fn main() -> Result<(), String> {
 }
 
 fn iterate(core: &mut Core, state: &mut State, token: &Token, font: &Font) -> Result<(), String> {
-    let handle = core.handle();
-    let timeline = user_timeline(TWITTER_HANDLE, false, false, token, &handle)
-        .with_page_size(TIMELINE_PAGE_SIZE);
+    let timeline =
+        user_timeline(TWITTER_HANDLE, false, false, token).with_page_size(TIMELINE_PAGE_SIZE);
     let (_timeline, images) = check_timeline(core, state, timeline)?;
     if env::var("DRY_RUN").is_err() {
         for image_url in images {
@@ -105,17 +104,16 @@ fn send_tweet(core: &mut Core, token: &Token, img: Vec<u8>) -> Result<(), String
 
     info!("Tweeting image of size {}", img.len());
 
-    let handle = core.handle();
     match core.run(
         UploadBuilder::new(img, image_jpg())
             .alt_text(ALT_TEXT)
-            .call(token, &handle),
+            .call(token),
     ) {
         Err(error) => Err(format!("Failed to upload image: {:?}", error)),
         Ok(media_handle) => match core.run(
             DraftTweet::new("")
                 .media_ids(&[media_handle.id])
-                .send(token, &handle),
+                .send(token),
         ) {
             Err(error) => Err(format!("Failed to send tweet: {:?}", error)),
             Ok(_) => Ok(()),
@@ -135,7 +133,7 @@ where
             return Err(format!(
                 "Unable to decode image loaded from {:?}: {:?}",
                 url, error
-            ))
+            ));
         }
     };
 

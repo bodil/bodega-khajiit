@@ -2,3 +2,4 @@
 **/*.rs.bk
 /state.json
 /.env
+.clever.json

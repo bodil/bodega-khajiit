@@ -9,15 +9,11 @@ use tokio_core::reactor::Core;
 const INDEX_HTML: &[u8] = include_bytes!("../index.html");
 
 #[cfg(production)]
-#[allow(unknown_lints)]
-#[allow(needless_pass_by_value)]
 fn web_responder(req: Request<Body>) -> impl Future<Item = Response<Body>, Error = Error> {
     check_https_redirect(&req).or_else(|_| serve_static())
 }
 
 #[cfg(not(production))]
-#[allow(unknown_lints)]
-#[allow(needless_pass_by_value)]
 fn web_responder(_req: Request<Body>) -> impl Future<Item = Response<Body>, Error = Error> {
     serve_static()
 }
@@ -29,7 +25,8 @@ fn serve_static() -> impl Future<Item = Response<Body>, Error = Error> {
             .header("Content-Type", "text/html")
             .body(Body::from(
                 ::std::str::from_utf8(INDEX_HTML).expect("index.html has invalid UTF-8!"),
-            )).unwrap(),
+            ))
+            .unwrap(),
     )
 }
 
