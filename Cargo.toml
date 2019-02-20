@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Bodil Stokke <bodil@bodil.org>"]
 
 [dependencies]
-egg-mode = { git = "https://github.com/QuietMisdreavus/twitter-rs.git" }
 rusttype = "0.7.5"
 tokio-core = "0.1.17"
 dotenv = "0.13.0"
@@ -19,3 +18,7 @@ postgres = "0.15.2"
 version = "0.21.0"
 default-features = false
 features = ["jpeg", "jpeg_rayon"]
+
+[dependencies.egg-mode]
+git = "https://github.com/QuietMisdreavus/twitter-rs.git"
+rev = "8491554282f5e8a43f9144208198b756ce5ed07a"

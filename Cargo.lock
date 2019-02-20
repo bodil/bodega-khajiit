@@ -127,7 +127,7 @@ name = "bodega-khajiit"
 version = "0.1.0"
 dependencies = [
  "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "egg-mode 0.12.0 (git+https://github.com/QuietMisdreavus/twitter-rs.git)",
+ "egg-mode 0.12.0 (git+https://github.com/QuietMisdreavus/twitter-rs.git?rev=8491554282f5e8a43f9144208198b756ce5ed07a)",
  "env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.12.24 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -350,7 +350,7 @@ dependencies = [
 [[package]]
 name = "egg-mode"
 version = "0.12.0"
-source = "git+https://github.com/QuietMisdreavus/twitter-rs.git#8491554282f5e8a43f9144208198b756ce5ed07a"
+source = "git+https://github.com/QuietMisdreavus/twitter-rs.git?rev=8491554282f5e8a43f9144208198b756ce5ed07a#8491554282f5e8a43f9144208198b756ce5ed07a"
 dependencies = [
  "base64 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1946,7 +1946,7 @@ dependencies = [
 "checksum digest 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e5b29bf156f3f4b3c4f610a25ff69370616ae6e0657d416de22645483e72af0a"
 "checksum digest 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)" = "03b072242a8cbaf9c145665af9d250c59af3b958f83ed6824e13533cf76d5b90"
 "checksum dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c0d0a1279c96732bc6800ce6337b6a614697b0e74ae058dc03c62ebeb78b4d86"
-"checksum egg-mode 0.12.0 (git+https://github.com/QuietMisdreavus/twitter-rs.git)" = "<none>"
+"checksum egg-mode 0.12.0 (git+https://github.com/QuietMisdreavus/twitter-rs.git?rev=8491554282f5e8a43f9144208198b756ce5ed07a)" = "<none>"
 "checksum either 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3be565ca5c557d7f59e7cfcf1844f9e3033650c929c6566f511e8005f205c1d0"
 "checksum env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "afb070faf94c85d17d50ca44f6ad076bce18ae92f0037d350947240a36e9d42e"
 "checksum failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "795bd83d3abeb9220f257e597aa0080a508b27533824adf336529648f6abf7e2"
